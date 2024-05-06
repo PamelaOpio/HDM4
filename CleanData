@@ -1,0 +1,24 @@
+#Read data
+roads_inventory = pd.read_csv("/Users/pamelaacheng/Library/CloudStorage/OneDrive-Nexus365/DPhil/2022/HDM4/Data/Road condition/LTTP/Flexible_Pavement_road_condition_02_05_24_trial.csv")
+
+#Input time values for easy analysis. Where maintenance activity was performed, the time starts at t=0
+# Group the DataFrame by Road_name, GPS, and Year
+grouped = roads_inventory.groupby(['Road_name', 'GPS'])
+
+# Define a function to reset time to 0 for the same Road_name and GPS and increment time for different years
+def reset_time(group):
+    time = 0
+    prev_year = None
+    for index, row in group.iterrows():
+        if pd.notna(row['Maint']):
+            time = 0
+        elif prev_year is not None and prev_year != row['Year']:
+            time += 1
+        group.at[index, 'Time'] = time
+        prev_year = row['Year']
+        if pd.isna(prev_year):
+            time += 1  # Increment time for NaN years
+    return group
+
+# Apply the function to each group
+roads_inventory = grouped.apply(reset_time).reset_index(drop=True)
