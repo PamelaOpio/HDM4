@@ -1,0 +1,58 @@
+# CALCULATE TMI
+
+#Use simplified formula since we have annual values
+
+def calculate_thornthwaite_moisture_index(Temp, PRP):
+    # Calculate the heat index (I)
+    #Temp = row['Temp']
+    I = (Temp / 5) ** 1.514
+    
+    # Determine the exponent (a)
+    a = (0.000000675 * I**3) - (0.0000771 * I**2) + (0.01792 * I) + 0.49239
+    
+    # Assume average daylight hours factor (L) is about 12 hours
+    L = 12
+    
+    # Estimate annual potential evapotranspiration (PET)
+    #PET_annual = 16 * ((10 * T_annual / I) ** a) * L
+    PET_annual = 16 * ((10 * (Temp*12) / I) ** a) * L
+    
+    # Calculate Thornthwaite Moisture Index (TMI)
+    #TMI = (PRP - PET_annual) / PET_annual
+    
+    TMI = (75 * (PRP / PET_annual - 1)) + 10
+    
+    return TMI
+
+# Calculate TMI for each row
+roads_inventory['TMI'] = roads_inventory.apply(lambda row: calculate_thornthwaite_moisture_index(row['Temp'], row['PRP']), axis=1)
+
+# Save the updated DataFrame back to the CSV file
+#roads_inventory.to_csv("/Users/pamelaacheng/Library/CloudStorage/OneDrive-Nexus365/DPhil/2022/HDM4/Data/Road condition/LTTP/Flexible_Pavement_road_condition_02_05_24_Updated.csv", index=False)
+
+#LOAD FLOOD DATA
+# Load the shapefile with historical flood events
+"""
+The flood data was sourced from: https://floodobservatory.colorado.edu/Archives/index.html
+Dartmouth Flood Observatory
+"""
+shapefile = '/Users/pamelaacheng/Library/CloudStorage/OneDrive-Nexus365/DPhil/2022/HDM4/Data/Historical Flood maps/FloodArchive_region.shp'  # Update this to the path of your shapefile
+flood_data = gpd.read_file(shapefile)
+# Define function to check if point intersects with any polygon for a given year
+def check_flooding(row):
+    point = Point(row['Longitude'], row['Latitude'])
+    year = row['Year']
+    if pd.isna(year):
+        return 0, 0
+    year = str(int(year))  # Convert year to string to match with the 'BEGAN' column format
+    floods_in_year = flood_data[flood_data['BEGAN'].str.startswith(year)]
+    for _, flood_polygon in floods_in_year.iterrows():
+        if point.within(flood_polygon['geometry']):
+            return 1, (pd.to_datetime(flood_polygon['ENDED']) - pd.to_datetime(flood_polygon['BEGAN'])).days
+    return 0, 0
+
+# Apply function to each row in CSV data
+roads_inventory[['flooding', 'flood_duration']] = roads_inventory.apply(check_flooding, axis=1, result_type='expand')
+
+# Save the updated DataFrame to a new CSV file
+roads_inventory.to_csv('/Users/pamelaacheng/Library/CloudStorage/OneDrive-Nexus365/DPhil/2022/HDM4/Data/Road condition/LTTP/Flexible_Pavement_road_condition_02_05_24_Analyze.csv', index=False)
