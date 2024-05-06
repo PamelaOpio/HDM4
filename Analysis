@@ -1,0 +1,27 @@
+#Diagnostic tests
+#Diagnostic tests include:
+#1. Check for normality of dependent variables (IRI, Rut, Cracking)
+#2.
+
+from scipy.stats import shapiro
+
+# Filter road segments with flooding values of 1
+flooded_segments = roads_inventory[roads_inventory['flooding'] == 1]
+
+# Drop rows with NaN values in the 'IRI' column
+flooded_segments = flooded_segments.dropna(subset=['IRI'])
+
+# Plot histogram of IRI
+plt.figure(figsize=(10, 6))
+plt.hist(flooded_segments['IRI'], bins=20, color='darkblue', edgecolor='black')
+plt.xlabel('IRI')
+plt.ylabel('Frequency')
+plt.title('Histogram of IRI for flooded areas')
+plt.grid(True)
+plt.show()
+
+# Perform Shapiro-Wilk test for normality
+shapiro_stat, shapiro_pvalue = shapiro(flooded_segments['IRI'])
+print("Shapiro-Wilk test results:")
+print("Statistic:", shapiro_stat)
+print("p-value:", shapiro_pvalue)
