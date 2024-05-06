@@ -31,6 +31,8 @@ roads_inventory['TMI'] = roads_inventory.apply(lambda row: calculate_thornthwait
 #roads_inventory.to_csv("/Users/pamelaacheng/Library/CloudStorage/OneDrive-Nexus365/DPhil/2022/HDM4/Data/Road condition/LTTP/Flexible_Pavement_road_condition_02_05_24_Updated.csv", index=False)
 
 #LOAD FLOOD DATA
+
+from shapely.geometry import Point
 # Load the shapefile with historical flood events
 """
 The flood data was sourced from: https://floodobservatory.colorado.edu/Archives/index.html
